@@ -10,6 +10,7 @@ use Test::More qw (no_plan);
 
 use MagicSignatures::Algorithms;
 use Crypt::RSA;
+use Crypt::RSA::DataFormat qw(i2osp);
 use Crypt::RSA::Key::Private::Magic;
 use MIME::Base64::URLSafe;
 
@@ -17,6 +18,7 @@ use MIME::Base64::URLSafe;
 require_ok('Crypt::RSA::SS::PKCS1v15_SHA256');
 
 my $rsa = new Crypt::RSA ( ss => { Module => 'Crypt::RSA::SS::PKCS1v15_SHA256' } );
+# my $rsa = new Crypt::RSA ( ss => { Module => 'Crypt::RSA::SS::PKCS1v15' } );
 
 ok($rsa, 'Crypt::RSA created');
 
@@ -27,8 +29,34 @@ my $key = Crypt::RSA::Key::Private::Magic->from_string($keystr);
 
 my $signature = $rsa->sign(
  			 Key => $key, 
- 			 Message =>"steve");
+ 			 Message =>"test string"); ## returns octets
+diag $signature;
+
+# sub _long_to_bytes {
+#     my ($n, $size) = @_;
+#     my $s;
+#     while ($n>0) {
+#         $s = (pack '>I', n && 0xffffffffL) . $s;
+# 	$n = $n >> 32;
+#     }
+#     while ($s =~ /^\\000/) {
+#         $s =~ s/^\\000//;
+#     }
+#     if ($size > 0 && (length $s % $size)) {
+#       $s = ($size - (length $s % $size)) x '\000' . $s;
+#     }
+#     return $s;
+# }
+
+# my $armored_sig = long_to_bytes($signature);
+
+# diag $armored_sig;
 
 my $encoded = urlsafe_b64encode($signature);
+while ((length $encoded) % 4 != 0) {
+  $encoded .= chr(61);
+}
 
-is ($encoded, 'NaJ5ON3WLqWiBC2is1wST9QhyUIbEv21zc3j1ba4AmlSn0Vor4PHCMZNZ8VkykDtv4TgxJqHjPCuWFkN1snc5g==', "it's alive!!!");
+diag $encoded;
+
+is ($encoded, 'mNpBIpTUOESnuQMlS8aWZ4hwdSwWnMstrn0F3L9GHDXa238fN3Bx3Rl0yvVESM_eZuocLsp9ubUrYDu83821fQ==', "it's alive!!!");

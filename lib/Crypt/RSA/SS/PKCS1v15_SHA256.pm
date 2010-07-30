@@ -29,7 +29,7 @@ sub new {
 
     my $self = $class->SUPER::new(@_);
     $self->{encoding}->{SHA256} = "0x 30 31 30 0d 06 09 60 86 48 01
-                                       65 03 04 02 01 05 00 04 20";
+                                      65 03 04 02 01 05 00 04 20";
     $self->{digest} = 'SHA256';
 
     if ( $params{Version} ) {
