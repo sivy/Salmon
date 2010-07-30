@@ -43,7 +43,9 @@ my $key_text = 'RSA.mVgY8RN6URBTstndvmUUPb4UZTdwvwmddSKE5z_jvKUEK6yk1u3rrC9yN8k6
 #   return [$mod, $exp, $private_exp];
 # }
 
+# keystr is from the salmon playground
 my $keystr = "RSA.mVgY8RN6URBTstndvmUUPb4UZTdwvwmddSKE5z_jvKUEK6yk1u3rrC9yN8k6FilGj9K0eeUPe2hf4Pj-5CmHww==.AQAB.Lgy_yL3hsLBngkFdDw1Jy9TmSRMiH6yihYetQ8jy-jZXdsZXd8V5ub3kuBHHk4M39i3TduIkcrjcsiWQb77D8Q==";
+
 my $key = Crypt::RSA::Key::Private::Magic->from_string($keystr);
 
 my $signature = $rsa->sign(
