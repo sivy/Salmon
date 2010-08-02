@@ -57,7 +57,7 @@ diag "test signature object";
 
 my $signer = MagicSignatures::Algorithms::SignatureAlgRsaSha256->new($KEY_STR);
 
-diag $signer->to_string;
+is( $signer->to_string, $KEY_STR, 'to_string outputs same string as the input to init_from_string');
 
 my $signature_b64 = $signer->sign($TEST_MESSAGE);
 

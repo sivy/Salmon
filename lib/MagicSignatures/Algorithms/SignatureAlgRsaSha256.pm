@@ -36,13 +36,7 @@ sub to_string {
     unless ( defined $full_key_pair ) {
         $full_key_pair = 1;
     }
-    my $mod         = urlsafe_b64encode( $self->{key}->n );
-    my $exp         = "." . urlsafe_b64encode( $self->{key}->e );
-    my $private_exp = '';
-    if ( $full_key_pair && $self->{key}->d ) {
-        $private_exp = "." . urlsafe_b64encode( $self->{key}->d );
-    }
-    return "RSA." . $mod . $exp . $private_exp;
+    return $self->{key}->to_string($full_key_pair);
 }
 
 sub init_from_string {
