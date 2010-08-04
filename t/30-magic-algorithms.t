@@ -13,11 +13,12 @@ use Crypt::RSA;
 use Crypt::RSA::DataFormat qw(h2osp i2osp);
 use Crypt::RSA::Key::Private::Magic;
 use MIME::Base64::URLSafe;
+use Carp::Always;
 
 # Crypt::RSA::SS::PKCS1v15_SHA256 is a subclass (found in this distribution) that uses SHA256 instead of SHA1, MD5, or MD2
 require_ok('Crypt::RSA::SS::PKCS1v15_SHA256');
 
-my $rsa = new Crypt::RSA( ES => 'PKCS1v15', SS => { Module => 'Crypt::RSA::SS::PKCS1v15_SHA256' } );
+my $rsa = new Crypt::RSA( ES => 'PKCS1v15', SS => { Module => 'Crypt::RSA::SS::PKCS1v15_SHA256'} );
 
 ok( $rsa, 'Crypt::RSA created' );
 
@@ -30,34 +31,12 @@ my $TEST_MESSAGE = "test string";
 # TEST_SIG is the salmon playground signature for the message "test string"
 my $TEST_SIG = 'mNpBIpTUOESnuQMlS8aWZ4hwdSwWnMstrn0F3L9GHDXa238fN3Bx3Rl0yvVESM_eZuocLsp9ubUrYDu83821fQ==';
 
-my $key = Crypt::RSA::Key::Private::Magic->from_string($KEY_STR);
-
-my $signature = $rsa->sign(
-    Key     => $key,
-    Message => $TEST_MESSAGE,
-);    ## returns octets
-
-# diag $signature;
-
-my $encoded = urlsafe_b64encode($signature);
-while ( ( length $encoded ) % 4 != 0 ) {
-    $encoded .= chr(61);
-}
-
-# diag $encoded;
-
-diag "test that sig matches the sig produced by the salmon playground app";
-
-is( $encoded,
-    $TEST_SIG,
-    "signature matches salmon playground rawsignatures output"
-);
-
 diag "test signature object";
 
 my $signer = MagicSignatures::Algorithms::SignatureAlgRsaSha256->new($KEY_STR);
 
 is( $signer->to_string, $KEY_STR, 'to_string outputs same string as the input to init_from_string');
+
 
 my $signature_b64 = $signer->sign($TEST_MESSAGE);
 
@@ -79,29 +58,18 @@ my ($gen_public, $gen_private) =
 ok ($gen_public, 'public key generated');
 ok ($gen_private, 'private key generated');
 
-my $sig = $rsa->sign(
-    Key     => $gen_private,
-    Message => "test 2",
-);    ## returns octets
+## this will be used from MagicEnvelopeProtocol
+my $signer2 = MagicSignatures::Algorithms::SignatureAlgRsaSha256->new($gen_private);
 
-ok($sig, "new sig created from generated private key");
+my $signature = $signer2->sign("test 2");
 
-my $encoded_sig = urlsafe_b64encode($sig);
-while ( ( length $encoded_sig ) % 4 != 0 ) {
-    $encoded_sig .= chr(61);
-}
+# 0 = not the full keypair. this is what you would publish for a user
+my $public_key_str = $signer2->to_string(0);
 
-my $decoded_sig = urlsafe_b64decode($encoded_sig);
+## this will be used from MagicEnvelopeProtocol
+my $verifier = MagicSignatures::Algorithms::SignatureAlgRsaSha256->new($public_key_str);
 
-my $verify = $rsa->verify (
-    Message    => "test 2", 
-    Signature  => $decoded_sig, 
-    Key        => $gen_public
-);
+is ($verifier->to_string, $public_key_str, 'signer from public key string produces same string from to_string');
+ok ($verifier->verify("test 2", $signature), 'message verified for signer2');
 
-ok ($verify, "created sig checks out with generated public key");
-
-#my $verify2 = $signer->verify("test 2", $encoded_sig);
-
-#ok ($verify2, "created sig checked out by signer with generated");
 

@@ -12,9 +12,7 @@ use base qw(Crypt::RSA::SS::PKCS1v15);
 
 sub new {
     my ( $class, %params ) = @_;
-    use Data::Dumper;
-    print Dumper( \%params );
-    my $self = $class->SUPER::new(@_);
+    my $self = $class->SUPER::new(%params);
     $self->{encoding}->{SHA256} = "0x 30 31 30 0d 06 09 60 86 48 01
                                       65 03 04 02 01 05 00 04 20";
     $self->{digest} = 'SHA256';
