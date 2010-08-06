@@ -2,7 +2,7 @@
 
 package Salmon::MagicSignatures::MagicEnvelopeProtocol;
 
-use Salmon::MagicSignatures::KeyRetriever;
+# use Salmon::MagicSignatures::KeyRetriever;
 
 use Crypt::RSA;
 use XML::XPath;
@@ -62,6 +62,8 @@ sub get_signer_uri {
 sub is_allowed_signer {
     my $self = shift;
     my ( $data, $user_uri ) = @_;
+    $user_uri = $self->normalize_user($user_uri);
+    print $user_uri . " eq " . $self->get_signer_uri($data) . "?\n";
     return $user_uri eq $self->get_signer_uri($data);
 }
 

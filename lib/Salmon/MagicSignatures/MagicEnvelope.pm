@@ -5,7 +5,9 @@ package Salmon::MagicSignatures::MagicEnvelope;
 # use MagicSignatures::KeyRetriever;
 use Salmon::MagicSignatures::MagicEnvelopeProtocol;
 use Salmon::MagicSignatures::SignatureAlgRsaSha256;
+use XML::XPath;
 use XML::DOM;
+use MIME::Base64::URLSafe;
 use Data::Dumper;
 
 our $ENCODING     = 'base64url';
@@ -141,6 +143,33 @@ sub sign {
     $self->{sig} = $sig;
     $self->{alg} = $signer->get_name;
 
+}
+
+sub unfold {
+    my $self   = shift;
+    my $parser = new XML::DOM::Parser;
+    print urlsafe_b64decode( $self->{data} );
+    my $dom = $parser->parse( urlsafe_b64decode( $self->{data} ) );
+
+    my $prov = $dom->createElement("$_ME_NS:provenance");
+    $prov->setAttribute( 'xmlns:me', $_ME_NS_URL );
+
+    my $data = $dom->createElement("$_ME_NS:data");
+    $data->appendChild( $dom->createTextNode( $self->{data} ) );
+    $data->setAttribute( 'type', $self->{data_type} );
+    $prov->appendChild($data);
+
+    for my $field (qw(encoding sig alg)) {
+        my $field_el = $dom->createElement("$_ME_NS:$field");
+        $field_el->appendChild( $dom->createTextNode( $self->{$field} ) );
+        $prov->appendChild($field_el);
+    }
+    $dom->getDocumentElement->appendChild($prov);
+
+    my $atom = $dom->toString;
+    $dom->dispose;
+
+    return $atom;
 }
 
 sub _to_pretty {

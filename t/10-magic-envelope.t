@@ -4,12 +4,13 @@ use lib qw(../lib);
 
 use strict;
 use warnings;
-# use Carp::Always;
+
+use Carp::Always;
 
 use Test::More qw (no_plan);
 
-use MagicSignatures::MagicEnvelope;
-use MagicSignatures::MagicEnvelopeProtocol;
+use Salmon::MagicSignatures::MagicEnvelope;
+use Salmon::MagicSignatures::MagicEnvelopeProtocol;
 
 my $TEST_ATOM = <<ATOM;
 <?xml version='1.0' encoding='UTF-8'?>
@@ -37,7 +38,7 @@ my $TEST_ATOM_MULTIAUTHOR = <<MATOM;
     </entry>
 MATOM
 
-my $SIGNER_URI           = 'acct:test@example.com';
+my $SIGNER_URI       = 'acct:test@example.com';
 my $TEST_PRIVATE_KEY = join(
     '',
     (   'RSA.mVgY8RN6URBTstndvmUUPb4UZTdwvwmddSKE5z_jvKUEK6yk1',
@@ -48,35 +49,51 @@ my $TEST_PRIVATE_KEY = join(
     )
 );
 
-my $protocol = MagicSignatures::MagicEnvelopeProtocol->new();
+my $protocol = Salmon::MagicSignatures::MagicEnvelopeProtocol->new();
 
-is( $protocol->get_signer_uri($TEST_ATOM), 'acct:test@example.com', 'signer uri extracted');
-is( $protocol->get_signer_uri($TEST_ATOM_MULTIAUTHOR), 'acct:alice@example.com', 'signer uri extracted');
+is( $protocol->get_signer_uri($TEST_ATOM),             'acct:test@example.com',  'signer uri extracted' );
+is( $protocol->get_signer_uri($TEST_ATOM_MULTIAUTHOR), 'acct:alice@example.com', 'signer uri extracted' );
 
-ok($protocol->is_allowed_signer($TEST_ATOM, 'acct:test@example.com'), 'test user identified as allowed signer');
-ok($protocol->is_allowed_signer($TEST_ATOM_MULTIAUTHOR, 'acct:alice@example.com'), 'test user identified as allowed signer');
-ok(!$protocol->is_allowed_signer($TEST_ATOM_MULTIAUTHOR, 'acct:bob@example.com'), 'second test user identified as not an allowed signer');
+ok( $protocol->is_allowed_signer( $TEST_ATOM, 'acct:test@example.com' ),
+    'test user identified as allowed signer' );
+ok( $protocol->is_allowed_signer( $TEST_ATOM_MULTIAUTHOR, 'acct:alice@example.com' ),
+    'test user identified as allowed signer' );
+ok( !$protocol->is_allowed_signer( $TEST_ATOM_MULTIAUTHOR, 'acct:bob@example.com' ),
+    'second test user identified as not an allowed signer' );
 
 diag "test magic envelope";
 
-my $env = MagicSignatures::MagicEnvelope->new( 
-					      raw_data => $TEST_ATOM, #data to sign 
-					      signer_uri => $SIGNER_URI, #sign with this user's priv key
-					      signer_key => $TEST_PRIVATE_KEY, 
-					      data_type=>'application/atom+xml', # MIME of the content
-					      encoding => 'base64url',  # encoder
-					      alg => 'RSA-SHA256', # sig algorithm
-					     );
+my $env = Salmon::MagicSignatures::MagicEnvelope->new(
+    raw_data   => $TEST_ATOM,                #data to sign
+    signer_uri => $SIGNER_URI,               #sign with this user's priv key
+    signer_key => $TEST_PRIVATE_KEY,
+    data_type  => 'application/atom+xml',    # MIME of the content
+    encoding   => 'base64url',               # encoder
+    alg        => 'RSA-SHA256',              # sig algorithm
+);
 
-ok($env, 'created an envelope from params'); 
+diag explain $env;
 
-my $xml = $env->to_xml;
+ok( $env, 'created an envelope from params' );
 
-ok($xml, 'got something out of to_xml (need better checking)');
+#diag $env->_to_pretty('text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text text ', 4, 60);
 
-# my $env2 = MagicSignatures::MagicEnvelope->init_from_xml(
-# 							'application/magic-envelope+xml', # MIME to create
-# 							$xml, 
-# 							0
-# 							);
+my $xml = $env->to_xml(0);                   # full_doc => 0
 
+diag $xml;
+
+ok( $xml, 'got something out of to_xml (need better checking)' );
+
+my $env2 = Salmon::MagicSignatures::MagicEnvelope->new(
+    signer_uri => $SIGNER_URI,               #sign with this user's priv key
+    signer_key => $TEST_PRIVATE_KEY,
+    xml        => $xml,
+);
+
+my $xml2 = $env2->to_xml(0);
+
+diag $xml2;
+
+is( $xml, $xml2, 'to_xml of env2 matches to_xml of env1' );
+
+diag $env2->unfold();

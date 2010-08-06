@@ -10,12 +10,13 @@ use Crypt::RSA::DataFormat qw(h2osp i2osp);
 use Crypt::RSA::Key::Private;
 use MIME::Base64::URLSafe;
 use Data::Dumper;
+use Math::BigInt;
 
 sub new {
     my $class = shift;
-    my ($key) = @_;
+    my ( $key, $private ) = @_;
 
-    my $self = { private => 0 };
+    my $self = { private => ( defined $private ? $private : 0 ) };
     bless( $self, $class );
 
     return $self unless $key;
@@ -41,6 +42,7 @@ sub to_string {
         $full_key_pair = 1;
     }
 
+    print Dumper( $self->{key} );
     my $type = 'RSA';
     my $mod  = $self->_encode_b64( $self->{key}->n );
     my $exp  = $self->_encode_b64( $self->{key}->e );

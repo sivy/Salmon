@@ -5,6 +5,7 @@ use lib qw(../lib);
 
 use strict;
 use warnings;
+use Carp::Always;
 
 use Test::More qw (no_plan);
 
@@ -26,9 +27,8 @@ use WWW::Finger::Webfinger;
 
 my $wf = WWW::Finger::Webfinger->new('steveivy@monkinetic.status.net');
 
-diag $wf->webid;
+ok($wf);
 
 diag explain $wf;
 
-ok($wf);
 
